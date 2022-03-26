@@ -1,0 +1,67 @@
+﻿<Window x:Class="SteamP2PInfo.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SteamP2PInfo"
+        xmlns:config="clr-namespace:SteamP2PInfo.Config"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        mc:Ignorable="d"
+        WindowStyle="None"
+        Topmost="True"
+        ShowInTaskbar="False"
+        AllowsTransparency="True"
+        SizeToContent="WidthAndHeight"
+        Closed="Window_Closed"
+        ShowActivated="False"
+        Title="DS3ConnectionInfo Overlay Window" ContentRendered="Window_ContentRendered" MouseDown="Window_MouseDown" MouseUp="Window_MouseUp">
+    <Window.Resources>
+        <Style TargetType="{x:Type local:OverlayTextBlock}" x:Key="defaultStyle">
+            <Setter Property="Margin" Value="5 0"></Setter>
+            <Setter Property="Fill" Value="{Binding Source={x:Static config:GameConfig.Current}, Path=OverlayConfig.TextColor}"></Setter>
+            <Setter Property="Stroke" Value="{Binding Source={x:Static config:GameConfig.Current}, Path=OverlayConfig.StrokeColor}"></Setter>
+            <Setter Property="StrokeThickness" Value="{Binding Source={x:Static config:GameConfig.Current}, Path=OverlayConfig.StrokeWidth}"></Setter>
+            <Setter Property="Typeface" Value="{Binding Source={x:Static config:GameConfig.Current}, Path=OverlayConfig.Font}"></Setter>
+        </Style>
+        <BooleanToVisibilityConverter x:Key="VisibleIfTrueConverter" />
+    </Window.Resources>
+    <Window.Background>
+        <SolidColorBrush Color="Transparent"></SolidColorBrush>
+    </Window.Background>
+    <StackPanel HorizontalAlignment="Left">
+        <local:OverlayTextBlock x:Name="header" Style="{StaticResource defaultStyle}"></local:OverlayTextBlock>
+        <DataGrid CanUserSortColumns="False" IsReadOnly="True" CanUserReorderColumns="False" CanUserResizeColumns="False" HeadersVisibility="None" 
+                  Background="Transparent" RowBackground="Transparent" ItemsSource="{Binding}" AutoGenerateColumns="False" Name="dataGrid" ColumnWidth="SizeToCells">
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Header="Steam Name">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <local:OverlayTextBlock Text="{Binding Name}" Style="{StaticResource defaultStyle}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Steam ID" Visibility="{Binding Source={x:Static config:GameConfig.Current}, Path=OverlayConfig.ShowSteamID, Converter={StaticResource VisibleIfTrueConverter}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <local:OverlayTextBlock Text="{Binding SteamID}" Style="{StaticResource defaultStyle}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Ping">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <local:OverlayTextBlock Text="{Binding Ping, StringFormat=N0}" Fill="{Binding PingColor}" Style="{StaticResource defaultStyle}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTemplateColumn Header="Connection Quality" Visibility="{Binding Source={x:Static config:GameConfig.Current}, Path=OverlayConfig.ShowConnectionQuality, Converter={StaticResource VisibleIfTrueConverter}}">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <local:OverlayTextBlock Text="{Binding ConnectionQuality, StringFormat=N2}" Style="{StaticResource defaultStyle}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </StackPanel>
+</Window>

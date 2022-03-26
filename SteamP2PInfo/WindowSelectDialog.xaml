@@ -1,0 +1,31 @@
+﻿<mah:MetroWindow x:Class="SteamP2PInfo.WindowSelectDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:local="clr-namespace:SteamP2PInfo"
+        mc:Ignorable="d"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Title="Select Game Window" MinHeight="400" MinWidth="300" MaxHeight="600" MaxWidth="400">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="5">
+            <ListBox Name="WindowListBox" MouseDoubleClick="WindowListBox_MouseDoubleClick">
+                
+            </ListBox>
+        </ScrollViewer>
+        <Button Grid.Row="1" Grid.Column="0" Margin="5" Click="OpenButton_Click">Open</Button>
+        <Button Grid.Row="1" Grid.Column="1" Margin="5" Click="CancelButton_Click">Cancel</Button>
+    </Grid>
+</mah:MetroWindow>

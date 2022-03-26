@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="PostBuildDebug" AfterTargets="Build" Condition="'$(Configuration)' == 'Debug'">
+    <Copy SourceFiles="$(ProjectDir)steamworks_bin\steam_api64.dll" DestinationFolder="$(OutputPath)"></Copy>
+  </Target>
+
+  <Target Name="PostBuildRelease" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <FilesToDelete Include="$(OutputPath)*.pdb; $(OutputPath)*.xml; $(OutputPath)*.config"/>
+    </ItemGroup>
+    <Delete Files="@(FilesToDelete)"></Delete>
+    <RemoveDir Directories="$(OutputPath)x86; $(OutputPath)arm64; $(OutputPath)de"></RemoveDir>
+    <Copy SourceFiles="$(ProjectDir)steamworks_bin\steam_api64.dll" DestinationFolder="$(OutputPath)"></Copy>
+  </Target>
+</Project>

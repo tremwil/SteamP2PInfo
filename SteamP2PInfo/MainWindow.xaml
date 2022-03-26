@@ -1,0 +1,65 @@
+﻿<mah:MetroWindow x:Class="SteamP2PInfo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mah="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:local="clr-namespace:SteamP2PInfo"
+        xmlns:config="clr-namespace:SteamP2PInfo.Config"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        ContentRendered="MetroWindow_ContentRendered"
+        Title="DS3 Connection Info [VERSION]" Width="800" Height="450">
+    <mah:MetroWindow.RightWindowCommands>
+        <mah:WindowCommands>
+            <TextBlock VerticalAlignment="Center" Margin="0 0 10 0">           
+                <Hyperlink NavigateUri="" RequestNavigate="webLink_RequestNavigate" Name="linkUpdate">
+                    <TextBlock FontWeight="Bold" Name="textUpdate"></TextBlock>
+                </Hyperlink>
+            </TextBlock>
+            <TextBlock VerticalAlignment="Center" Margin="5 0 5 0">
+                <Hyperlink Name="labelGameState" NavigateUri="" RequestNavigate="labelGameState_RequestNavigate">
+                    <TextBlock Foreground="Orange" Name="textGameState">ATTACH GAME</TextBlock>
+                </Hyperlink>
+            </TextBlock>
+        </mah:WindowCommands>
+    </mah:MetroWindow.RightWindowCommands>
+    <mah:MetroWindow.Resources>
+        <local:HotkeyConverter x:Key="HotkeyConverter" />
+        <Style x:Key="textCenter" TargetType="{x:Type TextBlock}">
+            <Setter Property="TextAlignment" Value="Center"></Setter>
+        </Style>
+    </mah:MetroWindow.Resources>
+    <Grid>
+        <mah:MetroTabControl Name="tabCtrl">
+            <mah:MetroTabItem Header="Session Info" IsEnabled="True">
+                <DataGrid Margin="10 0 10 0" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Name="dataGridSession" ItemsSource="{Binding}" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Steam Name" IsReadOnly="True" Binding="{Binding Name}"></DataGridTextColumn>
+                        <DataGridTextColumn Header="Steam ID" IsReadOnly="True" Binding="{Binding SteamID}"></DataGridTextColumn>
+                        <DataGridTextColumn Header="Main Steam ID" IsReadOnly="True" Binding="{Binding MainSteamID}"></DataGridTextColumn>
+                        <DataGridTextColumn Header="Ping" IsReadOnly="True" Binding="{Binding Ping, StringFormat=N0}">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Foreground" Value="{Binding PingColor}"></Setter>
+                                    <Setter Property="TextAlignment" Value="Center"></Setter>
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Connection Quality" IsReadOnly="True" Binding="{Binding ConnectionQuality, StringFormat=N2}" ElementStyle="{StaticResource textCenter}"></DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </mah:MetroTabItem>
+            <mah:MetroTabItem Header="Config">
+                <ScrollViewer>
+                    <StackPanel Orientation="Vertical" Name="ConfigTab">
+                        <Label Margin="10 0 10 0" ToolTip="Steam Web API key used to query main Steam accounts. Without a valid key, this feature will not be available.">Steam Web API Key:</Label>
+                        <TextBox Margin="10 0 10 0" Text="{Binding Source={x:Static local:Settings.Default}, Path=SteamWebApiKey}" Width="500" HorizontalAlignment="Left"></TextBox>
+                        <Label Margin="10 0 10 0" ToolTip="Path to Steam IPC log file. Only change this if you installed Steam somewhere else.">Steam Web API Key:</Label>
+                        <TextBox Margin="10 0 10 0" Text="{Binding Source={x:Static local:Settings.Default}, Path=SteamLogPath}" Width="500" HorizontalAlignment="Left"></TextBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </mah:MetroTabItem>
+        </mah:MetroTabControl>
+    </Grid>
+</mah:MetroWindow>
