@@ -14,6 +14,9 @@ This is due to the very naive Steam IPC log file parsing. The program can "miss"
 ### Overlay cannot be dragged around
 I'm not sure what the cause for this is yet. Please modify the "X Offset" and "Y Offset" settings directly for now.
 
+### Cannot customize ping color thresholds
+Not really an issue, but I plan to implement a GUI editor for this in the future. For now the colors can be changed by directly editing the game's json configuration file. 
+
 # FAQ
 ### Why does it require administrator privileges?
 While the `SteamNetworkingMessages` API provides detailed connection information, the old API `SteamNetworking` does not do this. Hence in this the pings are computed by monitoring STUN packets that are sent to and recieved from the players' IPs. To capture these packets I use Event Tracing for Windows (ETW), which requires administrator privileges for "kernel" events like networking.
