@@ -20,6 +20,7 @@ namespace SteamP2PInfo
     {
         private static FileStream fs;
         private static StreamReader sr;
+        private static string unread = "";
 
         /// <summary>
         /// List of Steam lobbies the local player is currently in.
@@ -40,14 +41,14 @@ namespace SteamP2PInfo
 
             try
             {
-                fs = new FileStream(Settings.Default.SteamLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
                 sr = new StreamReader(fs);
                 sr.ReadToEnd();
             }
             catch
             {
                 if (fs != null) fs.Dispose();
-                if (fs != null) sr.Dispose();
+                if (sr != null) sr.Dispose();
                 return false;
             }
 
@@ -67,14 +68,16 @@ namespace SteamP2PInfo
 
         public static void UpdatePeerList()
         {
-            string lines = sr.ReadToEnd();
-            foreach (string line in lines.Split('\n'))
+            string[] lines = sr.ReadToEnd().Split(new char[] { '\n' }, StringSplitOptions.None);
+            for (int i = 0; i < lines.Length - 1; i++ )
             {
+                string line = (i == 0) ? unread + lines[i] : lines[i];
                 CSteamID lobby = ExtractLobby(line);
 
                 if (!line.Contains("IClientMatchmaking::LeaveLobby") && lobby.IsLobby() && !mLobbies.Contains(lobby))
                     mLobbies.Add(lobby);
             }
+            unread = lines[lines.Length - 1];
 
             mLobbies.RemoveWhere(lobbyID =>
             {
@@ -95,6 +98,7 @@ namespace SteamP2PInfo
                     if (SteamNetworking.GetP2PSessionState(player, out P2PSessionState_t pConnectionState) && SteamPeerOldAPI.IsSessionStateOK(pConnectionState))
                     {
                         mPeers[player] = new SteamPeerOldAPI(player);
+                        Logger.WriteLine($"[PEER CONNECT] \"{mPeers[player].Name}\" (https://steamcommunity.com/profiles/{(ulong)mPeers[player].SteamID}) has connected via SteamNetworking");
                         if (GameConfig.Current.SetPlayedWith)
                             SteamFriends.SetPlayedWith(player);
                     }
@@ -106,6 +110,7 @@ namespace SteamP2PInfo
                         if (SteamPeerNewAPI.IsConnStateOK(connState))
                         {
                             mPeers[player] = new SteamPeerNewAPI(player);
+                            Logger.WriteLine($"[PEER CONNECT] \"{mPeers[player].Name}\" (https://steamcommunity.com/profiles/{(ulong)mPeers[player].SteamID}) has connected via SteamNetworkingMessages");
                             if (GameConfig.Current.SetPlayedWith)
                                 SteamFriends.SetPlayedWith(player);
                         }
@@ -127,6 +132,7 @@ namespace SteamP2PInfo
                 }
                 if (!hasLobbyInCommon || !mPeers[player].UpdatePeerInfo())
                 {
+                    Logger.WriteLine($"[PEER DISCONNECT] \"{mPeers[player].Name}\" (https://steamcommunity.com/profiles/{(ulong)mPeers[player].SteamID}) has left the lobby or lost P2P connection");
                     mPeers[player].Dispose();
                     mPeers.Remove(player);
                 }

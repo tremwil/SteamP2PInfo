@@ -270,6 +270,7 @@
     <Compile Include="Config\IConfigUIElement.cs" />
     <Compile Include="Config\OverlayAnchor.cs" />
     <Compile Include="Config\OverlayConfig.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="SteamPeerBase.cs" />
     <Compile Include="ETWPingMonitor.cs" />
     <Compile Include="FormatUtils.cs" />
@@ -344,6 +345,7 @@
     </None>
     <None Include="app.config" />
     <None Include="app.manifest" />
+    <None Include="build.targets" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

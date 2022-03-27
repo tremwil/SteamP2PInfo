@@ -43,18 +43,17 @@ namespace SteamP2PInfo.Config
             })]
         public bool SetPlayedWith { get; set; } = false;
 
-        // TODO: IMPLEMENT LOGGING
-        ///// <summary>
-        ///// If true, will dump peer information into a game-specific log file.
-        ///// </summary>
-        //[JsonProperty("log_activity")]
-        //[ConfigBindingElement("Log Activity", typeof(ToggleSwitch), "IsOnProperty",
-        //    Tooltip: "If enabled, will log each peer connection / disconnection in a game-specific log file.",
-        //    UIElementProperties: new object[] {
-        //        new object[] { "OnContent", "Yes" },
-        //        new object[] { "OffContent", "No" }
-        //    })]
-        //public bool LogActivity { get; set; } = true;
+        /// <summary>
+        /// If true, will dump peer information into a game-specific log file.
+        /// </summary>
+        [JsonProperty("log_activity")]
+        [ConfigBindingElement("Log Activity", typeof(ToggleSwitch), "IsOnProperty",
+            Tooltip: "If enabled, will log each peer connection / disconnection in a game-specific log file.",
+            UIElementProperties: new object[] {
+                new object[] { "OnContent", "Yes" },
+                new object[] { "OffContent", "No" }
+            })]
+        public bool LogActivity { get; set; } = false;
 
         /// <summary>
         /// If true, the hotkey system will be enabled while attached to this game.

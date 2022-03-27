@@ -19,6 +19,8 @@ namespace SteamP2PInfo
         /// </summary>
         public CSteamID SteamID { get; protected set; }
 
+        // The following field is probably useless now that Steam appears to have disabled the IsPlayingSharedGame request
+
         /// <summary>
         /// Main Steam ID of the peer, if playing on an alternate account. 
         /// </summary>
@@ -79,7 +81,7 @@ namespace SteamP2PInfo
         protected SteamPeerBase(CSteamID steamID)
         {
             SteamID = steamID;
-            RequestMainSteamID();
+            //RequestMainSteamID();
         }
 
         /// <summary>

@@ -18,6 +18,7 @@ namespace SteamP2PInfo
 {
     static class SteamWebAPI
     {
+        // NOTE: It seems Steam has discontinued the IsPlayingSharedGame request. So this code is useless right now.
         public static CSteamID GetMainSteamId(CSteamID altId)
         {
             if (Settings.Default.SteamWebApiKey == "")

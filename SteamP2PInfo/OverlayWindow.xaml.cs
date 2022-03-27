@@ -6,6 +6,9 @@ using System.Windows.Input;
 using System.Windows.Data;
 using System.Windows.Threading;
 using SteamP2PInfo.Config;
+using System.Windows.Controls;
+using System.Collections.ObjectModel;
+using System.Windows.Media;
 
 namespace SteamP2PInfo
 {
@@ -150,8 +153,26 @@ namespace SteamP2PInfo
             }
         }
 
+        private void dataGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            if (dep == null) return;
+
+            if (dep is DataGridRow)
+            {
+                DataGridRow row = dep as DataGridRow;
+                var peers = (ObservableCollection<SteamPeerBase>)(dataGrid.ItemsSource);
+                Steamworks.SteamFriends.ActivateGameOverlayToUser("steamid", peers[row.GetIndex()].SteamID);
+            }
+        }
+
         private void Window_Closed(object sender, EventArgs e)
         {
+            headerUpdateTimer.Stop();
             User32.UnhookWinEvent(hLocHook);
             User32.UnhookWinEvent(hFocusHook);
         }

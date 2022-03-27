@@ -43,7 +43,7 @@ namespace SteamP2PInfo
             Dispatcher.UnhandledException += (s, e) => { if (!Debugger.IsAttached) ShowUnhandledException(e.Exception, "Dispatcher", true); };
 
             InitializeComponent();
-            Closed += MainWindow_Closed;
+            Closing += MainWindow_Closed;
 
             peers = new ObservableCollection<SteamPeerBase>();
             dataGridSession.DataContext = peers;
@@ -73,6 +73,11 @@ namespace SteamP2PInfo
 
         private void Timer_Tick(object sender, EventArgs e)
         {
+            // Necessary to close the program after the game exits, as SteamAPI_Shutdown isn't
+            // sufficient to have steam recognize the game is no longer running
+            if (!WinAPI.User32.IsWindow(wInfo.Handle))
+                Close();
+
             if (HotkeyManager.Enabled && !GameConfig.Current.HotkeysEnabled)
                 HotkeyManager.Disable();
 
@@ -173,6 +178,8 @@ namespace SteamP2PInfo
                     overlay = new OverlayWindow(wInfo.Handle, wInfo.ProcessId, wInfo.ThreadId);
                     overlay.dataGrid.DataContext = peers;
 
+                    SteamConsoleHelper();
+
                     if (!SteamPeerManager.Init())
                     {
                         MessageBox.Show("Could not initialize Steam API", "Steam API Error", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -198,9 +205,9 @@ namespace SteamP2PInfo
             }
         }
 
-        private void MetroWindow_ContentRendered(object sender, EventArgs e)
+        private void SteamConsoleHelper()
         {
-            Process.Start("cmd.exe", "/c start steam://open/console");
+            Process.Start(new ProcessStartInfo("steam://open/console"));
 
             MetroDialogSettings diagSettings = new MetroDialogSettings()
             {
@@ -213,6 +220,22 @@ namespace SteamP2PInfo
                 MessageDialogStyle.AffirmativeAndNegative, diagSettings);
             if (result == MessageDialogResult.Affirmative)
                 Clipboard.SetText("log_ipc IClientMatchmaking");
+        }
+
+        private void dataGridSession_DoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            DependencyObject dep = (DependencyObject)e.OriginalSource;
+            while ((dep != null) && !(dep is DataGridRow))
+            {
+                dep = VisualTreeHelper.GetParent(dep);
+            }
+            if (dep == null) return;
+
+            if (dep is DataGridRow)
+            {
+                DataGridRow row = dep as DataGridRow;
+                SteamFriends.ActivateGameOverlayToUser("steamid", peers[row.GetIndex()].SteamID);
+            }
         }
     }
 }

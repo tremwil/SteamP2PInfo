@@ -8,7 +8,6 @@
         xmlns:config="clr-namespace:SteamP2PInfo.Config"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        ContentRendered="MetroWindow_ContentRendered"
         Title="DS3 Connection Info [VERSION]" Width="800" Height="450">
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
@@ -33,11 +32,11 @@
     <Grid>
         <mah:MetroTabControl Name="tabCtrl">
             <mah:MetroTabItem Header="Session Info" IsEnabled="True">
-                <DataGrid Margin="10 0 10 0" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Name="dataGridSession" ItemsSource="{Binding}" AutoGenerateColumns="False">
+                <DataGrid Margin="10 0 10 0" Name="dataGridSession" ItemsSource="{Binding}" AutoGenerateColumns="False" MouseDoubleClick="dataGridSession_DoubleClick">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Steam Name" IsReadOnly="True" Binding="{Binding Name}"></DataGridTextColumn>
-                        <DataGridTextColumn Header="Steam ID" IsReadOnly="True" Binding="{Binding SteamID}"></DataGridTextColumn>
-                        <DataGridTextColumn Header="Main Steam ID" IsReadOnly="True" Binding="{Binding MainSteamID}"></DataGridTextColumn>
+                        <DataGridTextColumn Header="Steam ID" IsReadOnly="True" Binding="{Binding SteamID}" x:Name="ColumnSteamID"></DataGridTextColumn>
+                        <!--<DataGridTextColumn Header="Main Steam ID" IsReadOnly="True" Binding="{Binding MainSteamID}" x:Name="ColumnSteamIDMain"></DataGridTextColumn>-->
                         <DataGridTextColumn Header="Ping" IsReadOnly="True" Binding="{Binding Ping, StringFormat=N0}">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="{x:Type TextBlock}">
@@ -53,9 +52,9 @@
             <mah:MetroTabItem Header="Config">
                 <ScrollViewer>
                     <StackPanel Orientation="Vertical" Name="ConfigTab">
-                        <Label Margin="10 0 10 0" ToolTip="Steam Web API key used to query main Steam accounts. Without a valid key, this feature will not be available.">Steam Web API Key:</Label>
-                        <TextBox Margin="10 0 10 0" Text="{Binding Source={x:Static local:Settings.Default}, Path=SteamWebApiKey}" Width="500" HorizontalAlignment="Left"></TextBox>
-                        <Label Margin="10 0 10 0" ToolTip="Path to Steam IPC log file. Only change this if you installed Steam somewhere else.">Steam Web API Key:</Label>
+                        <!--<Label Margin="10 0 10 0" ToolTip="Steam Web API key used to query main Steam accounts. Without a valid key, this feature will not be available.">Steam Web API Key:</Label>
+                        <TextBox Margin="10 0 10 0" Text="{Binding Source={x:Static local:Settings.Default}, Path=SteamWebApiKey}" Width="500" HorizontalAlignment="Left"></TextBox>-->
+                        <Label Margin="10 0 10 0" ToolTip="Path to Steam IPC log file. Only change this if you installed Steam somewhere else.">Steam Log File Path:</Label>
                         <TextBox Margin="10 0 10 0" Text="{Binding Source={x:Static local:Settings.Default}, Path=SteamLogPath}" Width="500" HorizontalAlignment="Left"></TextBox>
                     </StackPanel>
                 </ScrollViewer>

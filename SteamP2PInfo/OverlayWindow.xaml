@@ -31,7 +31,7 @@
     <StackPanel HorizontalAlignment="Left">
         <local:OverlayTextBlock x:Name="header" Style="{StaticResource defaultStyle}"></local:OverlayTextBlock>
         <DataGrid CanUserSortColumns="False" IsReadOnly="True" CanUserReorderColumns="False" CanUserResizeColumns="False" HeadersVisibility="None" 
-                  Background="Transparent" RowBackground="Transparent" ItemsSource="{Binding}" AutoGenerateColumns="False" Name="dataGrid" ColumnWidth="SizeToCells">
+                  Background="Transparent" RowBackground="Transparent" ItemsSource="{Binding}" AutoGenerateColumns="False" Name="dataGrid" ColumnWidth="SizeToCells" MouseDoubleClick="dataGrid_MouseDoubleClick">
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="Steam Name">
                     <DataGridTemplateColumn.CellTemplate>
