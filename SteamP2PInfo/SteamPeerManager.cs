@@ -9,6 +9,7 @@ using System.Diagnostics;
 
 using SteamP2PInfo.Config;
 using System.Text.RegularExpressions;
+using System.Windows;
 
 namespace SteamP2PInfo
 {
@@ -33,19 +34,13 @@ namespace SteamP2PInfo
         /// </summary>
         private static Dictionary<CSteamID, SteamPeerBase> mPeers = new Dictionary<CSteamID, SteamPeerBase>();
 
-        public static bool Init()
+        public static void Init()
         {
-            Environment.SetEnvironmentVariable("SteamAppId", GameConfig.Current.SteamAppId.ToString());
-            if (!SteamAPI.Init())
-                return false;
-
             fsWatcher = new FileSystemWatcher(Path.GetDirectoryName(Settings.Default.SteamLogPath));
             fsWatcher.Filter = Path.GetFileName(Settings.Default.SteamLogPath);
             fsWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
             fsWatcher.Changed += (e, s) => mustReopenLog = true;
             fsWatcher.EnableRaisingEvents = true;
-
-            return true;
         }
 
         private static CSteamID ExtractLobby(string str)
@@ -65,17 +60,26 @@ namespace SteamP2PInfo
             if (mustReopenLog)
             {
                 sr?.Dispose();
+                sr = null;
+
                 fs?.Close();
                 fs?.Dispose();
+                fs = null;
 
-                fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
-                sr = new StreamReader(fs);
-                sr.BaseStream.Seek(0, SeekOrigin.End);
-
-                mustReopenLog = false;
+                try
+                {
+                    fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+                    sr = new StreamReader(fs);
+                    sr.BaseStream.Seek(0, SeekOrigin.End);
+                    mustReopenLog = false;
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    MessageBox.Show("Steam IPC log file directory does not exist", "Directory Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
 
-            while (true)
+            while (!mustReopenLog)
             {
                 string line = await sr.ReadLineAsync();
                 if (line == null) break;

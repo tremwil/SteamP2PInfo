@@ -18,11 +18,6 @@ namespace SteamP2PInfo.Config
         /// </summary>
         [JsonProperty("process_name")]
         public string ProcessName { get; set; } = "";
-        /// <summary>
-        /// Name of the game's window. Used to itentify which window to target with the overlay.
-        /// </summary>
-        [JsonProperty("window_name")]
-        public string WindowName { get; set; } = "";
 
         /// <summary>
         /// The Steam App ID of the game.
