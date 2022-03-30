@@ -21,6 +21,7 @@ namespace SteamP2PInfo
         private User32.WinEventDelegate locEvtHook, focusEvtHook;
         private IntPtr hLocHook, hFocusHook;
         bool isDragging = false;
+        bool closed = false;
 
         private DispatcherTimer headerUpdateTimer;
 
@@ -56,6 +57,8 @@ namespace SteamP2PInfo
 
         public void UpdateVisibility()
         {
+            if (closed) return;
+
             bool shouldShow = !User32.IsIconic(TgtWinHandle);
             if (!IsVisible && GameConfig.Current.OverlayConfig.Enabled && shouldShow)
             {
@@ -172,6 +175,7 @@ namespace SteamP2PInfo
 
         private void Window_Closed(object sender, EventArgs e)
         {
+            closed = true;
             headerUpdateTimer.Stop();
             User32.UnhookWinEvent(hLocHook);
             User32.UnhookWinEvent(hFocusHook);

@@ -20,7 +20,8 @@ namespace SteamP2PInfo
     {
         private static FileStream fs;
         private static StreamReader sr;
-        private static string unread = "";
+        private static FileSystemWatcher fsWatcher;
+        private static bool mustReopenLog = true;
 
         /// <summary>
         /// List of Steam lobbies the local player is currently in.
@@ -34,26 +35,19 @@ namespace SteamP2PInfo
 
         public static bool Init()
         {
-            File.WriteAllText("steam_appid.txt", GameConfig.Current.SteamAppId.ToString());
-
+            Environment.SetEnvironmentVariable("SteamAppId", GameConfig.Current.SteamAppId.ToString());
             if (!SteamAPI.Init())
                 return false;
 
-            try
-            {
-                fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
-                sr = new StreamReader(fs);
-                sr.ReadToEnd();
-            }
-            catch
-            {
-                if (fs != null) fs.Dispose();
-                if (sr != null) sr.Dispose();
-                return false;
-            }
+            fsWatcher = new FileSystemWatcher(Path.GetDirectoryName(Settings.Default.SteamLogPath));
+            fsWatcher.Filter = Path.GetFileName(Settings.Default.SteamLogPath);
+            fsWatcher.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+            fsWatcher.Changed += (e, s) => mustReopenLog = true;
+            fsWatcher.EnableRaisingEvents = true;
 
             return true;
         }
+
         private static CSteamID ExtractLobby(string str)
         {
             Regex steamid3 = new Regex(@"\[L:1:(?<id>\d+)\]");
@@ -66,18 +60,34 @@ namespace SteamP2PInfo
             else return new CSteamID(0);
         }
 
-        public static void UpdatePeerList()
+        public async static void UpdatePeerList()
         {
-            string[] lines = sr.ReadToEnd().Split(new char[] { '\n' }, StringSplitOptions.None);
-            for (int i = 0; i < lines.Length - 1; i++ )
+            if (mustReopenLog)
             {
-                string line = (i == 0) ? unread + lines[i] : lines[i];
+                sr?.Dispose();
+                fs?.Close();
+                fs?.Dispose();
+
+                fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
+                sr = new StreamReader(fs);
+                sr.BaseStream.Seek(0, SeekOrigin.End);
+
+                mustReopenLog = false;
+            }
+
+            while (true)
+            {
+                string line = await sr.ReadLineAsync();
+                if (line == null) break;
+
+                if (!line.Contains("eldenring.exe") || line.Contains("IClientMatchmaking::LeaveLobby"))
+                    continue;
+
                 CSteamID lobby = ExtractLobby(line);
 
-                if (!line.Contains("IClientMatchmaking::LeaveLobby") && lobby.IsLobby() && !mLobbies.Contains(lobby))
+                if (lobby.IsLobby() && !mLobbies.Contains(lobby))
                     mLobbies.Add(lobby);
             }
-            unread = lines[lines.Length - 1];
 
             mLobbies.RemoveWhere(lobbyID =>
             {
@@ -137,8 +147,6 @@ namespace SteamP2PInfo
                     mPeers.Remove(player);
                 }
             }
-
-            sr.ReadToEnd();
         }
 
         public static IEnumerable<SteamPeerBase> GetPeers()

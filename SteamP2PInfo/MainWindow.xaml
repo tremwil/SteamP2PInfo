@@ -8,7 +8,7 @@
         xmlns:config="clr-namespace:SteamP2PInfo.Config"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
-        Title="DS3 Connection Info [VERSION]" Width="800" Height="450">
+        Title="Steam P2P Info [VERSION]" Width="800" Height="450">
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands>
             <TextBlock VerticalAlignment="Center" Margin="0 0 10 0">           

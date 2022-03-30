@@ -11,7 +11,7 @@ using System.Windows;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DS3ConnectionInfo")]
+[assembly: AssemblyProduct("SteamP2PInfo")]
 [assembly: AssemblyCopyright("Copyright © tremwil 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

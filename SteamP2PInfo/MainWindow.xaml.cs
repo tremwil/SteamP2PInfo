@@ -33,6 +33,8 @@ namespace SteamP2PInfo
         private ObservableCollection<SteamPeerBase> peers;
         private OverlayWindow overlay;
         private DispatcherTimer timer;
+        private int timerTicks = 0;
+        private bool saveRequest = false;
 
         private WindowSelectDialog.WindowInfo wInfo;
 
@@ -52,6 +54,8 @@ namespace SteamP2PInfo
             timer = new DispatcherTimer();
             timer.Interval = TimeSpan.FromSeconds(1);
             timer.Tick += Timer_Tick;
+
+            Settings.Default.PropertyChanged += (s, e) => { saveRequest = true; };
 
             Task.Run(() =>
             {
@@ -84,9 +88,16 @@ namespace SteamP2PInfo
             if (!HotkeyManager.Enabled && GameConfig.Current.HotkeysEnabled)
                 HotkeyManager.Enable();
 
-            SteamPeerManager.UpdatePeerList();
-            peers.Clear();
+            if ((timerTicks = (timerTicks + 1) % 5) == 0)
+            {
+                // Rather not have the settings update on a loop, but 
+                // Fody generated OnChange seems to break PropertyChanged 
+                // for GameConfig. So do this for now.
+                GameConfig.Current?.Save();
+                SteamPeerManager.UpdatePeerList();
+            }
 
+            peers.Clear();
             foreach (SteamPeerBase p in SteamPeerManager.GetPeers())
                 peers.Add(p);
 
@@ -110,8 +121,12 @@ namespace SteamP2PInfo
             Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(overlay.UpdatePosition));
             overlay.UpdateVisibility();
 
-            GameConfig.Current.Save();
-            Settings.Default.Save();
+            if (saveRequest)
+            {
+                GameConfig.Current.Save();
+                Settings.Default.Save();
+                saveRequest = false;
+            }
         }
 
         private void ShowUnhandledException(Exception err, string type, bool fatal)

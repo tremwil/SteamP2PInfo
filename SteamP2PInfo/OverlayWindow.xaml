@@ -14,7 +14,7 @@
         SizeToContent="WidthAndHeight"
         Closed="Window_Closed"
         ShowActivated="False"
-        Title="DS3ConnectionInfo Overlay Window" ContentRendered="Window_ContentRendered" MouseDown="Window_MouseDown" MouseUp="Window_MouseUp">
+        Title="SteamP2PInfo Overlay Window" ContentRendered="Window_ContentRendered" MouseDown="Window_MouseDown" MouseUp="Window_MouseUp">
     <Window.Resources>
         <Style TargetType="{x:Type local:OverlayTextBlock}" x:Key="defaultStyle">
             <Setter Property="Margin" Value="5 0"></Setter>

@@ -35,5 +35,8 @@ namespace SteamP2PInfo.WinAPI
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern int GetProcessId(IntPtr hWnd);
+
+        [DllImport("Kernel32")]
+        public static extern void AllocConsole();
     }
 }
