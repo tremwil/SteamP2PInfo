@@ -41,6 +41,13 @@ namespace SteamP2PInfo
 
         public MainWindow()
         {
+            if (Process.GetProcessesByName("SteamP2PInfo").Length > 1)
+            {
+                MessageBox.Show("Cannot run 2 instances of Steam P2P Info at once.", "Program Already Running", MessageBoxButton.OK, MessageBoxImage.Stop);
+                Close();
+                return;
+            }
+
             AppDomain.CurrentDomain.UnhandledException += (s, e) => ShowUnhandledException((Exception)e.ExceptionObject, "CurrentDomain", e.IsTerminating);
             TaskScheduler.UnobservedTaskException += (s, e) => ShowUnhandledException(e.Exception, "TaskScheduler", false);
             Dispatcher.UnhandledException += (s, e) => { if (!Debugger.IsAttached) ShowUnhandledException(e.Exception, "Dispatcher", true); };
@@ -172,7 +179,7 @@ namespace SteamP2PInfo
 
                     if (!Directory.Exists(System.IO.Path.GetDirectoryName(Settings.Default.SteamLogPath)))
                     {
-                        MessageBox.Show("Steam IPC log file directory does not exist", "Directory Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Steam IPC log file directory does not exist. Please modify the config accordingly.", "Directory Not Found", MessageBoxButton.OK, MessageBoxImage.Error);
                         return;
                     }
 
@@ -239,7 +246,16 @@ namespace SteamP2PInfo
             var result = this.ShowModalMessageExternal("Necessary Step", "The Steam console has just been opened. Please enter the following to enable matchmaking call logging: \"log_ipc IClientMatchmaking\"",
                 MessageDialogStyle.AffirmativeAndNegative, diagSettings);
             if (result == MessageDialogResult.Affirmative)
-                Clipboard.SetText("log_ipc IClientMatchmaking");
+            {
+                try
+                {
+                    Clipboard.SetText("log_ipc IClientMatchmaking");
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show($"Failed to write command to clipboard. Please enter \"log_ipc IClientMatchmaking\" manually.\n\n {e}", "Write to Clipboard Failed!", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         private void dataGridSession_DoubleClick(object sender, MouseButtonEventArgs e)

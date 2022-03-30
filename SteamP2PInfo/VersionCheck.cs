@@ -14,7 +14,7 @@ namespace SteamP2PInfo
 {
     static class VersionCheck
     {
-        public static readonly string CurrentVersion = "V1.0.2";
+        public static readonly string CurrentVersion = "V1.0.3";
         public static JObject LatestRelease { get; private set; }
 
         public static bool FetchLatest()

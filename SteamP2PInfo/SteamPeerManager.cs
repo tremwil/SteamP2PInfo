@@ -60,17 +60,17 @@ namespace SteamP2PInfo
             if (mustReopenLog)
             {
                 sr?.Dispose();
-                sr = null;
-
                 fs?.Close();
                 fs?.Dispose();
-                fs = null;
 
                 try
                 {
                     fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
                     sr = new StreamReader(fs);
-                    sr.BaseStream.Seek(0, SeekOrigin.End);
+                    // If the file must be reopened, read from the last 256 bytes instead of from the end.
+                    // This should prevent a rare case of lobby "missing" when the reopen occurs as the IPC calls
+                    // are made my the game
+                    if (fs.Length > 256) fs.Seek(-256, SeekOrigin.End);
                     mustReopenLog = false;
                 }
                 catch (DirectoryNotFoundException)
