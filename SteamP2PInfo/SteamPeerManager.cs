@@ -84,7 +84,7 @@ namespace SteamP2PInfo
                 string line = await sr.ReadLineAsync();
                 if (line == null) break;
 
-                if (!line.Contains("eldenring.exe") || line.Contains("IClientMatchmaking::LeaveLobby"))
+                if (!line.Contains(GameConfig.Current.ProcessName) || line.Contains("IClientMatchmaking::LeaveLobby"))
                     continue;
 
                 CSteamID lobby = ExtractLobby(line);
