@@ -34,4 +34,4 @@ When a peer is connected using the `SteamNetworkingMessages` API, this roughly c
 Since the tool is loaded with the game's Steam AppId, letting the program run after the game closes would make Steam think the game is still running. Calling `SteamAPI_Shutdown` does not seem to fix the problem, so we have to close the process.
 
 ### I found a bug / I have something to say about the tool
-Feel free to open an issue on this Github or direct message me on discord at tremwil#3713.
+Feel free to open an issue on this Github repo.
