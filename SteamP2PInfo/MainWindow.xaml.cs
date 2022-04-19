@@ -172,7 +172,7 @@ namespace SteamP2PInfo
         {
             if (wInfo == null)
             {
-                WindowSelectDialog dialog = new WindowSelectDialog();
+                WindowSelectDialog dialog = new WindowSelectDialog() { Owner = this };
                 if (dialog.ShowDialog() == true)
                 {
                     GameConfig.LoadOrCreate(dialog.SelectedWindow.ProcessName);
