@@ -270,7 +270,10 @@ namespace SteamP2PInfo
             if (dep is DataGridRow)
             {
                 DataGridRow row = dep as DataGridRow;
-                SteamFriends.ActivateGameOverlayToUser("steamid", peers[row.GetIndex()].SteamID);
+                if (GameConfig.Current.OpenProfileInOverlay)
+                    SteamFriends.ActivateGameOverlayToUser("steamid", peers[row.GetIndex()].SteamID);
+                else
+                    Process.Start($"https://steamcommunity.com/profiles/{peers[row.GetIndex()].SteamID}");
             }
         }
     }

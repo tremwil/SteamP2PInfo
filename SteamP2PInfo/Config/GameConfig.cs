@@ -38,6 +38,15 @@ namespace SteamP2PInfo.Config
             })]
         public bool SetPlayedWith { get; set; } = false;
 
+        [JsonProperty("open_profile_in_overlay")]
+        [ConfigBindingElement("Show profiles in Steam overlay", typeof(ToggleSwitch), "IsOnProperty",
+            Tooltip: "If enabled, double clicking on a peer's name in the Session Info tab will open their profile\ninside the Steam overlay. Otherwise, the default browser is used.",
+            UIElementProperties: new object[] {
+                new object[] { "OnContent", "Yes" },
+                new object[] { "OffContent", "No" }
+            })]
+        public bool OpenProfileInOverlay { get; set; } = true;
+
         /// <summary>
         /// If true, will dump peer information into a game-specific log file.
         /// </summary>
@@ -52,7 +61,6 @@ namespace SteamP2PInfo.Config
 
         /// <summary>
         /// If true, the hotkey system will be enabled while attached to this game.
-        /// The hotkey system 
         /// </summary>
         [JsonProperty("hotkeys_enabled")]
         [ConfigBindingElement("Enable Hotkeys", typeof(ToggleSwitch), "IsOnProperty",
