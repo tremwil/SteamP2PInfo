@@ -21,11 +21,11 @@
             <ColumnDefinition></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <ScrollViewer Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="5">
-            <ListBox Name="WindowListBox" MouseDoubleClick="WindowListBox_MouseDoubleClick">
+            <ListBox Name="WindowListBox" MouseDoubleClick="WindowListBox_MouseDoubleClick" SelectionChanged="WindowListBox_SelectionChanged">
                 
             </ListBox>
         </ScrollViewer>
-        <Button Grid.Row="1" Grid.Column="0" Margin="5" Click="OpenButton_Click">Open</Button>
+        <Button Grid.Row="1" Grid.Column="0" Margin="5" Click="OpenButton_Click" IsEnabled="False" Name="btnOpen">Open</Button>
         <Button Grid.Row="1" Grid.Column="1" Margin="5" Click="CancelButton_Click">Cancel</Button>
     </Grid>
 </mah:MetroWindow>

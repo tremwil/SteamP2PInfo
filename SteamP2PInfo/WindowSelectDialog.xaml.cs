@@ -81,5 +81,10 @@ namespace SteamP2PInfo
         {
             DialogResult = false;
         }
+
+        private void WindowListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            btnOpen.IsEnabled = true;
+        }
     }
 }
