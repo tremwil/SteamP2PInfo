@@ -39,14 +39,14 @@ namespace SteamP2PInfo
         {
             if (Config.GameConfig.Current == null || !Config.GameConfig.Current.LogActivity) return;
             CreateOrOpenLogFile();
-            if (fs != null) fs.Write($"[{DateTime.Now:HH:mm::ss.ff}] {message}");
+            if (fs != null) fs.Write($"[{DateTime.Now:HH:mm:ss.ff}] {message}");
         }
 
         public static void WriteLine(string message)
         {
             if (Config.GameConfig.Current == null || !Config.GameConfig.Current.LogActivity) return;
             CreateOrOpenLogFile();
-            if (fs != null) fs.WriteLine($"[{DateTime.Now:HH:mm::ss.ff}] {message}");
+            if (fs != null) fs.WriteLine($"[{DateTime.Now:HH:mm:ss.ff}] {message}");
         }
     }
 }
