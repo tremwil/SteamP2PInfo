@@ -33,6 +33,7 @@ namespace SteamP2PInfo
 
         private List<WindowInfo> windows = new List<WindowInfo>();
         public WindowInfo SelectedWindow = null;
+        public bool skipSteamConsole = false;
 
         public WindowSelectDialog()
         {
@@ -77,6 +78,13 @@ namespace SteamP2PInfo
             DialogResult = true;
         }
 
+        private void OpenImmButton_Click(object sender, RoutedEventArgs e)
+        {
+            SelectedWindow = windows[WindowListBox.SelectedIndex];
+            skipSteamConsole = true;
+            DialogResult = true;
+        }
+
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
             DialogResult = false;
@@ -85,6 +93,7 @@ namespace SteamP2PInfo
         private void WindowListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             btnOpen.IsEnabled = true;
+            btnOpenImm.IsEnabled = true;
         }
     }
 }
