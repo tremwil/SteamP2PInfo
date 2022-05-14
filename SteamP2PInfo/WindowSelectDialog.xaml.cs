@@ -78,7 +78,7 @@ namespace SteamP2PInfo
             DialogResult = true;
         }
 
-        private void OpenImmButton_Click(object sender, RoutedEventArgs e)
+        private void OpenSkipConsoleButton_Click(object sender, RoutedEventArgs e)
         {
             SelectedWindow = windows[WindowListBox.SelectedIndex];
             skipSteamConsole = true;
@@ -93,7 +93,7 @@ namespace SteamP2PInfo
         private void WindowListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             btnOpen.IsEnabled = true;
-            btnOpenImm.IsEnabled = true;
+            btnOpenSkipConsole.IsEnabled = true;
         }
     }
 }
