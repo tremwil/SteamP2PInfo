@@ -205,7 +205,8 @@ namespace SteamP2PInfo
 
                     wInfo = dialog.SelectedWindow;
                     SteamPeerManager.Init();
-                    SteamConsoleHelper();
+                    if(!dialog.skipSteamConsole)
+                        SteamConsoleHelper();
 
                     HotkeyManager.RemoveHotkey(overlayHotkey);
                     overlayHotkey = HotkeyManager.AddHotkey(wInfo.Handle, () => GameConfig.Current.OverlayConfig.Hotkey, () => GameConfig.Current.OverlayConfig.Enabled ^= true);

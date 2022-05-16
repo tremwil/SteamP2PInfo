@@ -22,10 +22,11 @@
         </Grid.ColumnDefinitions>
         <ScrollViewer Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Margin="5">
             <ListBox Name="WindowListBox" MouseDoubleClick="WindowListBox_MouseDoubleClick" SelectionChanged="WindowListBox_SelectionChanged">
-                
+
             </ListBox>
         </ScrollViewer>
-        <Button Grid.Row="1" Grid.Column="0" Margin="5" Click="OpenButton_Click" IsEnabled="False" Name="btnOpen">Open</Button>
-        <Button Grid.Row="1" Grid.Column="1" Margin="5" Click="CancelButton_Click">Cancel</Button>
+        <Button Grid.Row="1" Grid.Column="0" Margin="5,5,5,42" Click="OpenButton_Click" IsEnabled="False" Name="btnOpen">Open</Button>
+        <Button Grid.Row="1" Grid.Column="0" Margin="5,37,5,10" FontSize="11" Click="OpenSkipConsoleButton_Click" IsEnabled="False" Name="btnOpenSkipConsole">Open (skip Steam console)</Button>
+        <Button Grid.Row="1" Grid.Column="1" Margin="5,24,5,23" Click="CancelButton_Click">Cancel</Button>
     </Grid>
 </mah:MetroWindow>
