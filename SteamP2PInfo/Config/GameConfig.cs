@@ -72,6 +72,18 @@ namespace SteamP2PInfo.Config
         public bool HotkeysEnabled { get; set; } = true;
 
         /// <summary>
+        /// If true, a sound will be played when a new multiplayer session is detected.
+        /// </summary>
+        [JsonProperty("play_sound_on_new_session")]
+        [ConfigBindingElement("Play sound on new session", typeof(ToggleSwitch), "IsOnProperty",
+            Tooltip: "If enabled, a sound will be played when a new multiplayer session is detected.",
+            UIElementProperties: new object[] {
+                new object[] { "OnContent", "Yes" },
+                new object[] { "OffContent", "No" }
+            })]
+        public bool PlaySoundOnNewSession { get; set; } = false;
+
+        /// <summary>
         /// Overlay configuration for this game. Includes things like placement, enabled/disabled, etc.
         /// </summary>
         [JsonProperty("overlay")]

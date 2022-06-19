@@ -36,6 +36,7 @@ namespace SteamP2PInfo
         private Timer timer;
         private int timerTicks = 0;
         private int overlayHotkey = 0;
+        private int previousPeersAmount = 0;
 
         private WindowSelectDialog.WindowInfo wInfo;
 
@@ -107,6 +108,15 @@ namespace SteamP2PInfo
                 peers.Clear();
                 foreach (SteamPeerBase p in SteamPeerManager.GetPeers())
                     peers.Add(p);
+
+                if (GameConfig.Current.PlaySoundOnNewSession)
+                {
+                    if (peers.Count > 0 && previousPeersAmount == 0)
+                    {
+                        SystemSounds.Beep.Play();
+                    }
+                    previousPeersAmount = peers.Count;
+                }
 
                 // Update session info column sizes
                 foreach (var col in dataGridSession.Columns)
