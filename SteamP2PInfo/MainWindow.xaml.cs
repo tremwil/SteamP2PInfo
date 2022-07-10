@@ -215,7 +215,8 @@ namespace SteamP2PInfo
 
                     wInfo = dialog.SelectedWindow;
                     SteamPeerManager.Init();
-                    if(!dialog.skipSteamConsole)
+
+                    if(MustEnterSteamCommand())
                         SteamConsoleHelper();
 
                     HotkeyManager.RemoveHotkey(overlayHotkey);
@@ -241,6 +242,62 @@ namespace SteamP2PInfo
                     timer.Change(0, 1000);
                 }
             }
+        }
+
+        private bool MustEnterSteamCommand()
+        {
+            DateTime ipcLogDate;
+            String startupDateString = null;
+
+            if (!File.Exists(Settings.Default.SteamLogPath))
+                return true;
+
+            try
+            {
+                ipcLogDate = File.GetLastWriteTime(Settings.Default.SteamLogPath);
+
+            } catch (Exception)
+            {
+                return true;
+            }
+
+            try
+            {
+                using (FileStream stream = new FileStream(Settings.Default.SteamBootstrapLogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    var reader = new ReverseTextReader(stream, Encoding.UTF8);
+                    var today = DateTime.Today;
+                    int dateCheckCountdown = 20;
+                    while (!reader.EndOfStream)
+                    {
+                        String line = reader.ReadLine();
+                        if (line.Trim().Length == 0)
+                            continue;
+                        else if (line.Contains("Startup - updater built"))
+                        {
+                            int substringStartIndex = line.IndexOf("[") + 1;
+                            startupDateString = line.Substring(substringStartIndex, line.IndexOf("]") - substringStartIndex);
+                            break;
+                        }
+                        else
+                        {
+                            if (--dateCheckCountdown == 0)
+                            {
+                                int substringStartIndex = line.IndexOf("[") + 1;
+                                DateTime lineDate = DateTime.Parse(line.Substring(substringStartIndex, line.IndexOf("]") - substringStartIndex));
+                                if (today.Subtract(lineDate).TotalHours > 24)
+                                    return true;// let's assume Steam hasn't been running for 24+ hours
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                return true;
+            }
+
+            return startupDateString == null || DateTime.Parse(startupDateString) > ipcLogDate;
         }
 
         private void SteamConsoleHelper()

@@ -46,5 +46,17 @@ namespace SteamP2PInfo {
                 this["SteamLogPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Program Files (x86)\\Steam\\logs\\bootstrap_log.txt")]
+        public string SteamBootstrapLogPath {
+            get {
+                return ((string)(this["SteamBootstrapLogPath"]));
+            }
+            set {
+                this["SteamBootstrapLogPath"] = value;
+            }
+        }
     }
 }

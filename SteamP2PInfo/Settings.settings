@@ -3,10 +3,13 @@
   <Profiles />
   <Settings>
     <Setting Name="SteamWebApiKey" Type="System.String" Scope="User">
-      <Value Profile="(Default)"> </Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="SteamLogPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\Steam\logs\ipc_SteamClient.log</Value>
+    </Setting>
+    <Setting Name="SteamBootstrapLogPath" Type="System.String" Scope="User">
+      <Value Profile="(Default)">C:\Program Files (x86)\Steam\logs\bootstrap_log.txt</Value>
     </Setting>
   </Settings>
 </SettingsFile>
