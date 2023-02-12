@@ -1,7 +1,7 @@
 # SteamP2PInfo
 Simple C# application displaying active Steam P2P connection info, namely SteamID / ping / connection quality. This was specifically made with Elden Ring in mind, but it should work for any game that groups peers in the same session using SteamMatchmaking lobbies. Also comes with a customizable overlay (**windowed / borderless mode only!**) and logging.
 
-**It also supports adding peers to the Steam recent players list, if the game does not support this (like Elden Ring).**
+**It also supports adding peers to the Steam recent players list, if the game does not support this.**
 ## [Releases](https://github.com/tremwil/SteamP2PInfo/releases/)
 
 ![](https://raw.githubusercontent.com/tremwil/SteamP2PInfo/master/overlay_er.PNG)
