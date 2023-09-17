@@ -70,14 +70,6 @@ namespace SteamP2PInfo
             }
         }
 
-        /// <summary>
-        /// Request the main steam ID of the player via the Steam Web API.
-        /// </summary>
-        protected void RequestMainSteamID()
-        {
-            SteamWebAPI.GetMainSteamIdAsync(SteamID, id => MainSteamID = id);
-        }
-
         protected SteamPeerBase(CSteamID steamID)
         {
             SteamID = steamID;
