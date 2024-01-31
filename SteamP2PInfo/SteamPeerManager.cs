@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
 using Steamworks;
-using System.Diagnostics;
 
 using SteamP2PInfo.Config;
 using System.Text.RegularExpressions;
@@ -23,16 +19,15 @@ namespace SteamP2PInfo
         private static StreamReader sr;
         private static FileSystemWatcher fsWatcher;
         private static bool mustReopenLog = true;
-
-        /// <summary>
-        /// List of Steam lobbies the local player is currently in.
-        /// </summary>
-        private static HashSet<CSteamID> mLobbies = new HashSet<CSteamID>();
+        private static readonly Regex steamid3 = new Regex(@"\[U:1:(?<id>\d+)\]", RegexOptions.Compiled);
+        private const long steamid64ident = 76561197960265728;
 
         /// <summary>
         /// List of peers mapped by Steam ID.
         /// </summary>
-        private static Dictionary<CSteamID, SteamPeerBase> mPeers = new Dictionary<CSteamID, SteamPeerBase>();
+        private static Dictionary<CSteamID, SteamPeerInfo> mPeers = new Dictionary<CSteamID, SteamPeerInfo>();
+
+        private static List<KeyValuePair<CSteamID, SteamPeerInfo>> inactivePeers = new List<KeyValuePair<CSteamID, SteamPeerInfo>>();
 
         public static void Init()
         {
@@ -43,16 +38,45 @@ namespace SteamP2PInfo
             fsWatcher.EnableRaisingEvents = true;
         }
 
-        private static CSteamID ExtractLobby(string str)
+        private static CSteamID ExtractUser(string str)
         {
-            Regex steamid3 = new Regex(@"\[L:1:(?<id>\d+)\]");
-
             Match m = steamid3.Match(str);
             if (m.Success)
             {
-                return new CSteamID(0x186000000000000ul | ulong.Parse(m.Groups["id"].Value));
+                return new CSteamID(ulong.Parse(m.Groups["id"].Value) + steamid64ident);
             }
-            else return new CSteamID(0);
+            else
+            {
+                return new CSteamID(0);
+            }
+        }
+
+        private static SteamPeerBase GetPeer(CSteamID player)
+        {
+            if (SteamNetworking.GetP2PSessionState(player, out P2PSessionState_t pConnectionState) && SteamPeerOldAPI.IsSessionStateOK(pConnectionState))
+            {
+                SteamPeerOldAPI peer = new SteamPeerOldAPI(player);
+                Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via SteamNetworking");
+                if (GameConfig.Current.SetPlayedWith)
+                    SteamFriends.SetPlayedWith(player);
+                return peer;
+            }
+            else
+            {
+                SteamNetworkingIdentity netIdentity = new SteamNetworkingIdentity();
+                netIdentity.SetSteamID(player);
+                var connState = SteamNetworkingMessages.GetSessionConnectionInfo(ref netIdentity, out _, out _);
+                if (SteamPeerNewAPI.IsConnStateOK(connState))
+                {
+                    SteamPeerNewAPI peer = new SteamPeerNewAPI(player);
+                    Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via SteamNetworkingMessages");
+                    if (GameConfig.Current.SetPlayedWith)
+                        SteamFriends.SetPlayedWith(player);
+                    return peer;
+                }
+            }
+
+            return null;
         }
 
         public async static void UpdatePeerList()
@@ -84,78 +108,94 @@ namespace SteamP2PInfo
                 string line = await sr.ReadLineAsync();
                 if (line == null) break;
 
-                if (!line.Contains(GameConfig.Current.ProcessName) || line.Contains("IClientMatchmaking::LeaveLobby"))
+                if (!line.Contains(GameConfig.Current.ProcessName))
                     continue;
 
-                CSteamID lobby = ExtractLobby(line);
-
-                if (lobby.IsLobby() && !mLobbies.Contains(lobby))
-                    mLobbies.Add(lobby);
-            }
-
-            mLobbies.RemoveWhere(lobbyID =>
-            {
-                int numMembers = SteamMatchmaking.GetNumLobbyMembers(lobbyID);
-                if (numMembers == 0) return true;
-
-                bool localPlayerInLobby = false;
-                for (int i = 0; i < numMembers; i++)
+                bool begin;
+                if (line.Contains("BeginAuthSession"))
                 {
-                    CSteamID player = SteamMatchmaking.GetLobbyMemberByIndex(lobbyID, i);
+                    begin = true;
+                }
+                else if (line.Contains("EndAuthSession"))
+                {
+                    begin = false;
+                }
+                else
+                {
+                    continue; // no idea wtf this line was, but it doesn't belong
+                }
 
-                    if (player == (CSteamID)0 || mPeers.ContainsKey(player)) continue;
-                    if (player == SteamUser.GetSteamID())
+                CSteamID steamID = ExtractUser(line);
+
+                if (steamID.m_SteamID != 0)
+                {
+                    if (steamID.BIndividualAccount())
                     {
-                        localPlayerInLobby = true;
-                        continue;
-                    }
-                    if (SteamNetworking.GetP2PSessionState(player, out P2PSessionState_t pConnectionState) && SteamPeerOldAPI.IsSessionStateOK(pConnectionState))
-                    {
-                        mPeers[player] = new SteamPeerOldAPI(player);
-                        Logger.WriteLine($"[PEER CONNECT] \"{mPeers[player].Name}\" (https://steamcommunity.com/profiles/{(ulong)mPeers[player].SteamID}) has connected via SteamNetworking");
-                        if (GameConfig.Current.SetPlayedWith)
-                            SteamFriends.SetPlayedWith(player);
+                        if (begin)
+                        {
+                            if (!mPeers.TryGetValue(steamID, out SteamPeerInfo peer))
+                            {
+                                SteamPeerBase newPeer = GetPeer(steamID);
+                                if (newPeer != null)
+                                {
+                                    mPeers.Add(steamID, new SteamPeerInfo(newPeer));
+                                }
+                                else
+                                {
+                                    Logger.WriteLine($"[CONNECT ERROR] could not establish connection to \"{steamID}\"");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // peer just disconnected
+                            if (mPeers.TryGetValue(steamID, out SteamPeerInfo peer))
+                            {
+                                mPeers.Remove(steamID);
+                                peer.disconnectReason = SteamPeerInfo.DisconnectReason.AUTH_SESSION_ENDED;
+                                inactivePeers.Add(new KeyValuePair<CSteamID, SteamPeerInfo>(steamID, peer));
+                            }
+                        }
                     }
                     else
                     {
-                        SteamNetworkingIdentity netIdentity = new SteamNetworkingIdentity();
-                        netIdentity.SetSteamID(player);
-                        var connState = SteamNetworkingMessages.GetSessionConnectionInfo(ref netIdentity, out _, out _);
-                        if (SteamPeerNewAPI.IsConnStateOK(connState))
-                        {
-                            mPeers[player] = new SteamPeerNewAPI(player);
-                            Logger.WriteLine($"[PEER CONNECT] \"{mPeers[player].Name}\" (https://steamcommunity.com/profiles/{(ulong)mPeers[player].SteamID}) has connected via SteamNetworkingMessages");
-                            if (GameConfig.Current.SetPlayedWith)
-                                SteamFriends.SetPlayedWith(player);
-                        }
+                        Logger.WriteLine($"[PARSE ERROR] \"{steamID}\" was not a valid steam user");
                     }
-                }
-                return !localPlayerInLobby;
-            });
-
-            foreach (var player in mPeers.Keys.ToArray())
-            {
-                bool hasLobbyInCommon = false;
-                foreach (var lobby in mLobbies)
-                {
-                    if (SteamFriends.IsUserInSource(player, lobby))
-                    {
-                        hasLobbyInCommon = true;
-                        break;
-                    }
-                }
-                if (!hasLobbyInCommon || !mPeers[player].UpdatePeerInfo())
-                {
-                    Logger.WriteLine($"[PEER DISCONNECT] \"{mPeers[player].Name}\" (https://steamcommunity.com/profiles/{(ulong)mPeers[player].SteamID}) has left the lobby or lost P2P connection");
-                    mPeers[player].Dispose();
-                    mPeers.Remove(player);
                 }
             }
+
+            // clean up old peers. We can't remove from a Dictionary while iterating, so we save the entries we need to delete and then do a second pass.
+            foreach (var peerMapping in mPeers)
+            {
+                if (!peerMapping.Value.steamPeerBase.UpdatePeerInfo())
+                {
+                    peerMapping.Value.disconnectReason = SteamPeerInfo.DisconnectReason.PEER_DISCONNECTED;
+                    inactivePeers.Add(peerMapping);
+                }
+            }
+            foreach (var peer in inactivePeers)
+            {
+                switch (peer.Value.disconnectReason)
+                {
+                    case SteamPeerInfo.DisconnectReason.AUTH_SESSION_ENDED:
+                        Logger.WriteLine($"[PEER DISCONNECT] \"{peer.Value.steamPeerBase.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.Value.steamPeerBase.SteamID}) game session ended.");
+                        break;
+                    case SteamPeerInfo.DisconnectReason.PEER_DISCONNECTED:
+                        Logger.WriteLine($"[PEER DISCONNECT] \"{peer.Value.steamPeerBase.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.Value.steamPeerBase.SteamID}) peer disconnected from monitoring connection.");
+                        break;
+                    default:
+                        Logger.WriteLine($"[PEER DISCONNECT] \"{peer.Value.steamPeerBase.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.Value.steamPeerBase.SteamID}) unknown reason.");
+                        break;
+                }
+                peer.Value.steamPeerBase.Dispose();
+                mPeers.Remove(peer.Key);
+            }
+            inactivePeers.Clear();
         }
 
         public static IEnumerable<SteamPeerBase> GetPeers()
         {
-            return mPeers.Values;
+            return mPeers.Select(entry => entry.Value.steamPeerBase);
         }
     }
 }
