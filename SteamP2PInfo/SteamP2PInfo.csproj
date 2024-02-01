@@ -271,6 +271,7 @@
     <Compile Include="Config\OverlayAnchor.cs" />
     <Compile Include="Config\OverlayConfig.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="ReverseTextReader.cs" />
     <Compile Include="SteamPeerBase.cs" />
     <Compile Include="ETWPingMonitor.cs" />
     <Compile Include="FormatUtils.cs" />
@@ -280,6 +281,7 @@
     <Compile Include="OverlayWindow.xaml.cs">
       <DependentUpon>OverlayWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="SteamPeerInfo.cs" />
     <Compile Include="SteamPeerNewAPI.cs" />
     <Compile Include="SteamPeerOldAPI.cs" />
     <Compile Include="SteamPeerManager.cs" />
@@ -288,7 +290,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="SteamWebAPI.cs" />
     <Compile Include="VersionCheck.cs" />
     <Compile Include="WinAPI\CWPRETSTRUCT.cs" />
     <Compile Include="WinAPI\KBDLLHOOKSTRUCT.cs" />
