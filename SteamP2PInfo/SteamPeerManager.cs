@@ -19,8 +19,21 @@ namespace SteamP2PInfo
         private static StreamReader sr;
         private static FileSystemWatcher fsWatcher;
         private static bool mustReopenLog = true;
-        private static readonly Regex steamid3 = new Regex(@"\[U:1:(?<id>\d+)\]", RegexOptions.Compiled);
-        private const long steamid64ident = 76561197960265728;
+        private static long? lastPosInLog = null;
+        private static Stopwatch sw = new Stopwatch();
+
+        private static readonly Regex STEAMID3_REGEX = new Regex(@"\[U:1:(?<id>\d+)\]", RegexOptions.Compiled);
+        private const long STEAMID64_BASE = 0x0110_0001_0000_0000;
+
+        private const long PEER_TIMEOUT_MS = 5000;
+
+        private static readonly Func<CSteamID, SteamPeerBase>[] PEER_FACTORIES =
+            Assembly.GetExecutingAssembly()
+                .GetTypes()
+                .Where(t => t.IsSubclassOf(typeof(SteamPeerBase)))
+                .Select(t => new Func<CSteamID, SteamPeerBase>((CSteamID sid) => Activator.CreateInstance(t, sid) as SteamPeerBase))
+                .ToArray();
+            
 
         /// <summary>
         /// List of peers mapped by Steam ID.
@@ -40,10 +53,10 @@ namespace SteamP2PInfo
 
         private static CSteamID ExtractUser(string str)
         {
-            Match m = steamid3.Match(str);
+            Match m = STEAMID3_REGEX.Match(str);
             if (m.Success)
             {
-                return new CSteamID(ulong.Parse(m.Groups["id"].Value) + steamid64ident);
+                return new CSteamID(ulong.Parse(m.Groups["id"].Value) + STEAMID64_BASE);
             }
             else
             {
@@ -53,9 +66,10 @@ namespace SteamP2PInfo
 
         private static SteamPeerBase GetPeer(CSteamID player)
         {
-            if (SteamNetworking.GetP2PSessionState(player, out P2PSessionState_t pConnectionState) && SteamPeerOldAPI.IsSessionStateOK(pConnectionState))
+            SteamPeerBase peer = null;
+            foreach (var factory in PEER_FACTORIES)
             {
-                SteamPeerOldAPI peer = new SteamPeerOldAPI(player);
+                try
                 Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via SteamNetworking");
                 if (GameConfig.Current.SetPlayedWith)
                     SteamFriends.SetPlayedWith(player);
@@ -63,19 +77,24 @@ namespace SteamP2PInfo
             }
             else
             {
-                SteamNetworkingIdentity netIdentity = new SteamNetworkingIdentity();
-                netIdentity.SetSteamID(player);
+                    peer = factory(player);
+                    if (peer.UpdatePeerInfo())
                 var connState = SteamNetworkingMessages.GetSessionConnectionInfo(ref netIdentity, out _, out _);
                 if (SteamPeerNewAPI.IsConnStateOK(connState))
                 {
-                    SteamPeerNewAPI peer = new SteamPeerNewAPI(player);
+                        Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via {peer.ConnectionTypeName}");
                     Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via SteamNetworkingMessages");
                     if (GameConfig.Current.SetPlayedWith)
                         SteamFriends.SetPlayedWith(player);
+
                     return peer;
                 }
             }
-
+                catch (Exception)
+                {
+                    peer?.Dispose();
+                }
+            }
             return null;
         }
 
