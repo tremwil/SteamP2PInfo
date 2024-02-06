@@ -38,6 +38,8 @@ namespace SteamP2PInfo
         private int overlayHotkey = 0;
         private int previousPeersAmount = 0;
 
+        private const string STEAM_COMMAND = "log_ipc \"BeginAuthSession,EndAuthSession,LeaveLobby,SendClanChatMessage\"";
+
         private WindowSelectDialog.WindowInfo wInfo;
 
         public MainWindow()
@@ -249,6 +251,14 @@ namespace SteamP2PInfo
             DateTime ipcLogDate;
             String startupDateString = null;
 
+            // Check if the program was recently updated -- We'll want to enter the command again if so
+            if (Settings.Default.LastRunVersion != VersionCheck.CurrentVersion)
+            {
+                Settings.Default.LastRunVersion = VersionCheck.CurrentVersion;
+                Settings.Default.Save();
+                return true;
+            }
+
             if (!File.Exists(Settings.Default.SteamLogPath))
                 return true;
 
@@ -286,7 +296,7 @@ namespace SteamP2PInfo
                                 int substringStartIndex = line.IndexOf("[") + 1;
                                 DateTime lineDate = DateTime.Parse(line.Substring(substringStartIndex, line.IndexOf("]") - substringStartIndex));
                                 if (today.Subtract(lineDate).TotalHours > 24)
-                                    return true;// let's assume Steam hasn't been running for 24+ hours
+                                    return true; // let's assume Steam hasn't been running for 24+ hours
                             }
                         }
                     }
@@ -311,17 +321,19 @@ namespace SteamP2PInfo
                 NegativeButtonText = "Close"
             };
 
-            var result = this.ShowModalMessageExternal("Necessary Step", "The Steam console has just been opened. Please enter the following to enable matchmaking call logging: 'log_ipc \"BeginAuthSession,EndAuthSession\"'",
-                MessageDialogStyle.AffirmativeAndNegative, diagSettings);
+            var result = this.ShowModalMessageExternal(
+                "Necessary Step", $"The Steam console has just been opened. Please enter the following to enable matchmaking call logging: '{STEAM_COMMAND}'",
+                MessageDialogStyle.AffirmativeAndNegative, diagSettings
+            );
             if (result == MessageDialogResult.Affirmative)
             {
                 try
                 {
-                    Clipboard.SetText("log_ipc \"BeginAuthSession,EndAuthSession\"");
+                    Clipboard.SetText(STEAM_COMMAND);
                 }
                 catch (Exception e)
                 {
-                    MessageBox.Show($"Failed to copy command to clipboard. Please enter 'log_ipc \"BeginAuthSession,EndAuthSession\"' manually.\n\n {e}", "Write to Clipboard Failed!", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show($"Failed to copy command to clipboard. Please enter '{STEAM_COMMAND}' manually.\n\n {e}", "Write to Clipboard Failed!", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }

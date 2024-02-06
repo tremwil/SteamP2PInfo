@@ -11,5 +11,8 @@
     <Setting Name="SteamBootstrapLogPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">C:\Program Files (x86)\Steam\logs\bootstrap_log.txt</Value>
     </Setting>
+    <Setting Name="LastRunVersion" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Unset</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
