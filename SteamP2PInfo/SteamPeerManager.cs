@@ -6,6 +6,9 @@ using Steamworks;
 using SteamP2PInfo.Config;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Diagnostics;
+using System;
+using System.Reflection;
 
 namespace SteamP2PInfo
 {
@@ -40,8 +43,6 @@ namespace SteamP2PInfo
         /// </summary>
         private static Dictionary<CSteamID, SteamPeerInfo> mPeers = new Dictionary<CSteamID, SteamPeerInfo>();
 
-        private static List<KeyValuePair<CSteamID, SteamPeerInfo>> inactivePeers = new List<KeyValuePair<CSteamID, SteamPeerInfo>>();
-
         public static void Init()
         {
             fsWatcher = new FileSystemWatcher(Path.GetDirectoryName(Settings.Default.SteamLogPath));
@@ -70,26 +71,17 @@ namespace SteamP2PInfo
             foreach (var factory in PEER_FACTORIES)
             {
                 try
-                Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via SteamNetworking");
-                if (GameConfig.Current.SetPlayedWith)
-                    SteamFriends.SetPlayedWith(player);
-                return peer;
-            }
-            else
-            {
+                {
                     peer = factory(player);
                     if (peer.UpdatePeerInfo())
-                var connState = SteamNetworkingMessages.GetSessionConnectionInfo(ref netIdentity, out _, out _);
-                if (SteamPeerNewAPI.IsConnStateOK(connState))
-                {
+                    {
                         Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via {peer.ConnectionTypeName}");
-                    Logger.WriteLine($"[PEER CONNECT] \"{peer.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.SteamID}) has connected via SteamNetworkingMessages");
-                    if (GameConfig.Current.SetPlayedWith)
-                        SteamFriends.SetPlayedWith(player);
+                        if (GameConfig.Current.SetPlayedWith)
+                            SteamFriends.SetPlayedWith(player);
 
-                    return peer;
+                        return peer;
+                    }
                 }
-            }
                 catch (Exception)
                 {
                     peer?.Dispose();
@@ -100,6 +92,11 @@ namespace SteamP2PInfo
 
         public async static void UpdatePeerList()
         {
+            // Make sure we're constantly writing to the IPC log to force Steam to eventually flush
+            // This call was chosen because it's not something a game will call often
+            // Thus we avoid blowing up the IPC log with dummy calls
+            SteamFriends.SendClanChatMessage(new CSteamID(0), "");
+
             if (mustReopenLog)
             {
                 sr?.Dispose();
@@ -110,10 +107,11 @@ namespace SteamP2PInfo
                 {
                     fs = new FileStream(Settings.Default.SteamLogPath, FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite);
                     sr = new StreamReader(fs);
-                    // If the file must be reopened, read from the last 256 bytes instead of from the end.
-                    // This should prevent a rare case of lobby "missing" when the reopen occurs as the IPC calls
-                    // are made my the game
-                    if (fs.Length > 256) fs.Seek(-256, SeekOrigin.End);
+                    // If the file had to be reopened, read from the last position we were at before
+                    if (lastPosInLog is null)
+                        fs.Seek(0, SeekOrigin.End);
+                    else
+                        fs.Seek((long)lastPosInLog, SeekOrigin.Begin);
                     mustReopenLog = false;
                 }
                 catch (DirectoryNotFoundException)
@@ -122,10 +120,22 @@ namespace SteamP2PInfo
                 }
             }
 
+            var logDisconnect = new Action<SteamPeerBase, CSteamID, string>((p, sid, reason) =>
+            {
+                if (p is null)
+                    Logger.WriteLine($"[PEER DISCONNECT] (https://steamcommunity.com/profiles/{(ulong)sid}): {reason}");
+                else
+                    Logger.WriteLine($"[PEER DISCONNECT] \"{p.Name}\" (https://steamcommunity.com/profiles/{(ulong)sid}): {reason}");
+            });
+
             while (!mustReopenLog)
             {
                 string line = await sr.ReadLineAsync();
-                if (line == null) break;
+                if (line == null)
+                {
+                    lastPosInLog = fs.Position;
+                    break;
+                }
 
                 if (!line.Contains(GameConfig.Current.ProcessName))
                     continue;
@@ -139,10 +149,16 @@ namespace SteamP2PInfo
                 {
                     begin = false;
                 }
-                else
+                else if (line.Contains("LeaveLobby"))
                 {
-                    continue; // no idea wtf this line was, but it doesn't belong
+                    foreach (var sid in mPeers.Keys)
+                    {
+                        logDisconnect(mPeers[sid].peer, sid, "Player left Steam lobby");
+                    }
+                    mPeers.Clear();
+                    continue;
                 }
+                else continue;
 
                 CSteamID steamID = ExtractUser(line);
 
@@ -154,25 +170,22 @@ namespace SteamP2PInfo
                         {
                             if (!mPeers.TryGetValue(steamID, out SteamPeerInfo peer))
                             {
-                                SteamPeerBase newPeer = GetPeer(steamID);
-                                if (newPeer != null)
+                                var newPeerInfo = new SteamPeerInfo(GetPeer(steamID));
+                                if (newPeerInfo.peer is null)
                                 {
-                                    mPeers.Add(steamID, new SteamPeerInfo(newPeer));
+                                    Logger.WriteLine($"[PEER CONNECT] Player \"{steamID}\" was detected, but we don't have a P2P connection to them yet");
+                                    newPeerInfo.lastDisconnectTimeMS = sw.ElapsedMilliseconds;
                                 }
-                                else
-                                {
-                                    Logger.WriteLine($"[CONNECT ERROR] could not establish connection to \"{steamID}\"");
-                                }
+                                mPeers.Add(steamID, newPeerInfo);
                             }
                         }
                         else
                         {
                             // peer just disconnected
-                            if (mPeers.TryGetValue(steamID, out SteamPeerInfo peer))
+                            if (mPeers.TryGetValue(steamID, out SteamPeerInfo pInfo))
                             {
                                 mPeers.Remove(steamID);
-                                peer.disconnectReason = SteamPeerInfo.DisconnectReason.AUTH_SESSION_ENDED;
-                                inactivePeers.Add(new KeyValuePair<CSteamID, SteamPeerInfo>(steamID, peer));
+                                logDisconnect(pInfo.peer, steamID, "Auth session with peer ended");
                             }
                         }
                     }
@@ -183,38 +196,31 @@ namespace SteamP2PInfo
                 }
             }
 
-            // clean up old peers. We can't remove from a Dictionary while iterating, so we save the entries we need to delete and then do a second pass.
-            foreach (var peerMapping in mPeers)
+            // clean up old peers.
+            foreach (var sid in mPeers.Keys.ToArray())
             {
-                if (!peerMapping.Value.steamPeerBase.UpdatePeerInfo())
+                var pInfo = mPeers[sid];
+                bool isP2PConnected = false;
+                if (pInfo.peer is null)
+                    isP2PConnected = (pInfo.peer = GetPeer(sid)) != null;
+                else
+                    isP2PConnected = pInfo.peer.UpdatePeerInfo();
+
+                if (pInfo.isConnected && !isP2PConnected)
+                    pInfo.lastDisconnectTimeMS = sw.ElapsedMilliseconds;
+                pInfo.isConnected = isP2PConnected;
+
+                if (!isP2PConnected && sw.ElapsedMilliseconds - pInfo.lastDisconnectTimeMS > PEER_TIMEOUT_MS)
                 {
-                    peerMapping.Value.disconnectReason = SteamPeerInfo.DisconnectReason.PEER_DISCONNECTED;
-                    inactivePeers.Add(peerMapping);
+                    mPeers.Remove(sid);
+                    logDisconnect(pInfo.peer, sid, pInfo.peer is null ? "P2P connection was not established" : "Peer disconnected from P2P session");
                 }
             }
-            foreach (var peer in inactivePeers)
-            {
-                switch (peer.Value.disconnectReason)
-                {
-                    case SteamPeerInfo.DisconnectReason.AUTH_SESSION_ENDED:
-                        Logger.WriteLine($"[PEER DISCONNECT] \"{peer.Value.steamPeerBase.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.Value.steamPeerBase.SteamID}) game session ended.");
-                        break;
-                    case SteamPeerInfo.DisconnectReason.PEER_DISCONNECTED:
-                        Logger.WriteLine($"[PEER DISCONNECT] \"{peer.Value.steamPeerBase.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.Value.steamPeerBase.SteamID}) peer disconnected from monitoring connection.");
-                        break;
-                    default:
-                        Logger.WriteLine($"[PEER DISCONNECT] \"{peer.Value.steamPeerBase.Name}\" (https://steamcommunity.com/profiles/{(ulong)peer.Value.steamPeerBase.SteamID}) unknown reason.");
-                        break;
-                }
-                peer.Value.steamPeerBase.Dispose();
-                mPeers.Remove(peer.Key);
-            }
-            inactivePeers.Clear();
         }
 
         public static IEnumerable<SteamPeerBase> GetPeers()
         {
-            return mPeers.Select(entry => entry.Value.steamPeerBase);
+            return mPeers.Values.Where(info => info.peer != null).Select(info => info.peer);
         }
     }
 }
