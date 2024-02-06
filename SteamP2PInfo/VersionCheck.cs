@@ -39,7 +39,7 @@ namespace SteamP2PInfo
                 using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                 {
                     JArray data = JArray.Parse(reader.ReadToEnd());
-                    if (data.Count != 0) LatestRelease = (JObject)data[0];
+                    if (data.Count != 0) LatestRelease = (JObject)data.Where(r => !(bool)r["prerelease"]).First();
                     return data.Count != 0;
                 }
             }
