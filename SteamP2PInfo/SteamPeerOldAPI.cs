@@ -24,6 +24,8 @@ namespace SteamP2PInfo
 
         public override bool IsOldAPI { get { return true; } }
 
+        public override string ConnectionTypeName => "SteamNetworking";
+
         /// <summary>
         /// Ping to peer in milliseconds.
         /// </summary>
@@ -34,7 +36,6 @@ namespace SteamP2PInfo
         public SteamPeerOldAPI(CSteamID steamId) : base(steamId) 
         {
             mSessionState = new P2PSessionState_t();
-            UpdatePeerInfo();
         }
 
         public override void Dispose()

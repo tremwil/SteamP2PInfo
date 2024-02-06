@@ -37,6 +37,11 @@ namespace SteamP2PInfo
         public abstract bool IsOldAPI { get; }
 
         /// <summary>
+        /// Name representing the type of connection this peer is using (e.g. SteamNetworking, SteamNetworkingSockets)
+        /// </summary>
+        public abstract string ConnectionTypeName { get; }
+
+        /// <summary>
         /// Ping to peer in milliseconds.
         /// </summary>
         public abstract double Ping { get; }
@@ -73,7 +78,6 @@ namespace SteamP2PInfo
         protected SteamPeerBase(CSteamID steamID)
         {
             SteamID = steamID;
-            //RequestMainSteamID();
         }
 
         /// <summary>
