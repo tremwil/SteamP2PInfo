@@ -24,6 +24,8 @@ namespace SteamP2PInfo
 
         public override bool IsOldAPI { get { return false; } }
 
+        public override string ConnectionTypeName => "SteamNetworkingSockets";
+
         public override double Ping => mRealTimeStatus.m_nPing;
 
         public override double ConnectionQuality => mRealTimeStatus.m_flConnectionQualityLocal;
@@ -32,7 +34,6 @@ namespace SteamP2PInfo
         {
             mConnInfo = new SteamNetConnectionInfo_t();
             mRealTimeStatus = new SteamNetConnectionRealTimeStatus_t();
-            UpdatePeerInfo();
         }
 
         public override bool UpdatePeerInfo()

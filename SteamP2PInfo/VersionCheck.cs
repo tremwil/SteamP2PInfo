@@ -14,7 +14,7 @@ namespace SteamP2PInfo
 {
     static class VersionCheck
     {
-        public static readonly string CurrentVersion = "V1.1.0";
+        public static readonly string CurrentVersion = "V1.2.0";
         public static JObject LatestRelease { get; private set; }
 
         public static bool FetchLatest()
@@ -39,7 +39,7 @@ namespace SteamP2PInfo
                 using (StreamReader reader = new StreamReader(resp.GetResponseStream()))
                 {
                     JArray data = JArray.Parse(reader.ReadToEnd());
-                    if (data.Count != 0) LatestRelease = (JObject)data[0];
+                    if (data.Count != 0) LatestRelease = (JObject)data.Where(r => !(bool)r["prerelease"]).First();
                     return data.Count != 0;
                 }
             }

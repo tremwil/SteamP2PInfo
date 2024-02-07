@@ -2,20 +2,15 @@
 {
     internal class SteamPeerInfo
     {
-        internal SteamPeerBase steamPeerBase;
-        internal DisconnectReason disconnectReason;
+        internal SteamPeerBase peer = null;
+        internal bool isConnected;
+        internal long lastDisconnectTimeMS = 0;
+        
 
-        internal SteamPeerInfo(SteamPeerBase steamPeerBase)
+        internal SteamPeerInfo(SteamPeerBase peer)
         {
-            this.steamPeerBase = steamPeerBase;
-            disconnectReason = DisconnectReason.NONE;
-        }
-
-        internal enum DisconnectReason
-        {
-            NONE,
-            AUTH_SESSION_ENDED,
-            PEER_DISCONNECTED,
+            this.peer = peer;
+            isConnected = peer != null;
         }
     }
 }
